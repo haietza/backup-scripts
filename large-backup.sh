@@ -5,15 +5,18 @@
 # Define variables
 LOGSTART="`date +%Y%m%d%H%M`"
 MYLOG="$LOGSTART.large-backup.log"
-DIRECTORY="backup"
+#DIRECTORY="backup"
 FILES="files.txt"
 
 # Define variables from arguments
-BACKUPFILE=$1
+ARG1=$1
+LOCATION=$(echo $ARG1 | sed 's/\/backup.*//')
+DIRECTORY="$LOCATION/backup"
+BACKUPFILE=$(echo $ARG1 | sed 's/^.*backup/backup/')
 
 # Move backup file into directory
-mkdir $DIRECTORY
-mv $BACKUPFILE $DIRECTORY
+mkdir $DIRECTORY 
+mv $ARG1 $DIRECTORY
 cd $DIRECTORY
 
 # Decompress large backup file
@@ -33,15 +36,13 @@ rm $BACKUPFILE
 cd files
 ls -s -S -R | sed -e 's/^ *//; /total/d; /0 /d; /:/d; /^$/d' | sort -k1 -r -n | sed 's/[^ ]* //' > $FILES
 
-# While directory is over 600M (compress to 500M), delete next largest file
+# While directory is over 500M, delete next largest file
 while read -r LINE; do
     # Get directory size to compare to <=500M
-    DIRECTORYSIZE=$(du -sm ../../$DIRECTORY | sed -e "s/\(..\/..\/$DIRECTORY\)//g")
+    DIRECTORYSIZE=$(du -sm $DIRECTORY | sed -e "s:\($DIRECTORY\)::g")
     
-    if [ "$DIRECTORYSIZE" -gt +600 ]; then
-        echo "Directory size = $DIRECTORYSIZE" >> ../../$MYLOG 2>&1
-        
-        # Get next filename
+    if [ "$DIRECTORYSIZE" -gt +500 ]; then
+        echo "Directory size = $DIRECTORYSIZE" >> $LOCATION/$MYLOG 2>&1
         FILE=$LINE
         HASHDIRECTORY=$(echo $FILE | cut -c1-2)
         
@@ -50,18 +51,17 @@ while read -r LINE; do
         
         # Delete file
         rm $FILE
-        echo "Deleting $FILE" >> ../../../$MYLOG 2>&1
-        
+        echo "Deleting $FILE" >> $LOCATION/$MYLOG 2>&1
         # Go back up to files directory
         cd ..
     fi
 done < $FILES
 
 # Zip files into smaller backup
-cd ..
+cd $DIRECTORY 
 zip -r $BACKUPFILE *
-mv $BACKUPFILE ..
+mv $BACKUPFILE $LOCATION 
 
 # Remove files and directory
-cd ..
+cd $LOCATION 
 rm -rf $DIRECTORY
