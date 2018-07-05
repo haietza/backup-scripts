@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Run as ./large-backup.sh [file.mbz] [maxsize (in MB, no suffix)]
+# Run as ./large-backup.sh [backup-file.mbz (filename must start with 'backup')] [maxsize (in MB, no suffix)]
 # For example ./large-backup.sh ~/Desktop/backup-file.mbz 550
 
 # Define variables
